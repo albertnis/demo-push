@@ -1,0 +1,12 @@
+name = "about-push-notifier"
+compatibility_date = "2024-04-13"
+main = "worker.js"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "prod-about-push"
+database_id = "78dc5989-814f-44bc-b9d8-d1762a04421a"
+preview_database_id = "DB"
+
+[triggers]
+crons = [ "45 * * * *" ]

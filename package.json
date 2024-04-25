@@ -1,0 +1,17 @@
+{
+  "name": "about-push",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "run:web": "wrangler pages dev --port 8787",
+    "run:notifier": "wrangler dev -c src/notifier/wrangler.toml --test-scheduled --persist-to .wrangler/state/ --port 8788"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240405.0",
+    "wrangler": "^3.50.0"
+  }
+}

@@ -1,4 +1,5 @@
 .wrangler/
+.dev.vars
 
 ### Node ###
 # Logs

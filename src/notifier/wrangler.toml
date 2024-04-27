@@ -10,3 +10,6 @@ preview_database_id = "DB"
 
 [triggers]
 crons = [ "45 * * * *" ]
+
+[vars]
+PUSH_SERVER_PUBLIC_KEY = "BCUdAv5I5pJwseflX848zH2IQHwaSsvMRcE-7Exhq-ES1HssHg_UnHeinOlN9rg3dLrdSPd0IFfMvK08Ixj8e0w"

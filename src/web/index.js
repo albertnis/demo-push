@@ -1,5 +1,5 @@
 const SERVER_PUBLIC_KEY =
-  'BM_dw5-Sq5infxzHMbYRxipG7Gsd3x9JA9HmrzvBZpuPMCA03QH3kZqd2x7W4yDE78qs8h-WzDyzOG_uoG7cxwo'
+  'BCUdAv5I5pJwseflX848zH2IQHwaSsvMRcE-7Exhq-ES1HssHg_UnHeinOlN9rg3dLrdSPd0IFfMvK08Ixj8e0w'
 
 const tryParseJson = (input) => {
   try {

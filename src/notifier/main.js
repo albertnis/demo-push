@@ -25,7 +25,7 @@ const sendNotification = (applicationServerKeys) => async (subscription) => {
 
   console.log(
     'Sending notification:',
-    JSON.stringify({ body, endpoint, headers })
+    JSON.stringify({ body: body.byteLength, endpoint, headers })
   )
 
   const response = await fetch(endpoint, {
@@ -38,7 +38,7 @@ const sendNotification = (applicationServerKeys) => async (subscription) => {
     throw new Error(
       `Failed to send notification. The endpoint ${endpoint} responded with ${JSON.stringify(
         {
-          statusCode: response.statusCode,
+          statusCode: response.status,
           body: await response.text(),
         }
       )}`
@@ -79,14 +79,12 @@ export const main = async (db, privateKey, publicKey) => {
   const failedIds = subscriptions
     .map((subscription, i) => ({ subscription, result: sendResults[i] }))
     .filter((x) => x.result.status === 'rejected')
-    .map((x) => ({ id: x.subscription.id, reason: x.result.reason.message }))
+    .map((x) => ({
+      id: x.subscription.id,
+      reason: x.result.reason.message,
+    }))
 
   console.log('The following IDs failed:', JSON.stringify(failedIds))
 
-  console.log(
-    `The following IDs succeeded and will be deleted: [${successfulIds.join(
-      ', '
-    )}]`
-  )
-  await repo.deleteMany(successfulIds)
+  console.log(`The following IDs succeeded: [${successfulIds.join(', ')}]`)
 }

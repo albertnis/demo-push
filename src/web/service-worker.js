@@ -12,16 +12,10 @@ self.addEventListener('install', async () => {
 })
 
 self.addEventListener('push', async (e) => {
-  console.log(JSON.stringify(e))
+  console.log('Received event:', JSON.stringify(e))
 
-  const clients = await self.clients.matchAll({
-    type: 'window',
-    includeUncontrolled: true,
+  self.registration.showNotification('Something happened', {
+    body: 'it happened',
+    tag: 'about-push',
   })
-
-  console.log(`Got ${clients.length} clients`)
-
-  clients.forEach((c) =>
-    c.postMessage('Received notification event', JSON.stringify(e))
-  )
 })

@@ -22,6 +22,7 @@ export default {
    * @returns
    */
   async scheduled(event, env, ctx) {
+    console.log('Scheduled run commenced')
     ctx.waitUntil(
       main(env.DB, env.PUSH_SERVER_PRIVATE_KEY, env.PUSH_SERVER_PUBLIC_KEY)
     )

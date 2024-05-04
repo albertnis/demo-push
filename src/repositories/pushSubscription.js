@@ -1,6 +1,6 @@
 /**
  * @typedef PushSubscription
- * @prop {string} id
+ * @prop {number} push_subscription_id
  * @prop {string} endpoint
  * @prop {string | null} expiration_time
  * @prop {string} keys_auth
@@ -30,29 +30,22 @@ export const pushSubscription = (db) => ({
   },
 
   /** @returns {Promise<PushSubscription[]>} */
-  getAllDue: async () => {
-    const result = await db
-      .prepare(
-        "SELECT * FROM [PushSubscription] WHERE unixepoch('now', 'subsec') - unixepoch(notification_time, 'subsec') > 0"
-      )
-      .all()
-
-    return /** @type {PushSubscription[]} */ (result.results)
-  },
-
-  /** @returns {Promise<PushSubscription[]>} */
   getAll: async () => {
     const result = await db.prepare('SELECT * FROM [PushSubscription]').all()
 
     return /** @type {PushSubscription[]} */ (result.results)
   },
 
-  /** @param {string[]} ids */
-  deleteMany: async (ids) => {
-    if (ids.length === 0) return
+  /**
+   * @param {string} endpoint
+   * @returns {Promise<PushSubscription | null>}
+   **/
+  getByEndpoint: async (endpoint) => {
+    const result = await db
+      .prepare('SELECT * FROM [PushSubscription] WHERE endpoint = ?1')
+      .bind(endpoint)
+      .first()
 
-    const statement = db.prepare('DELETE FROM [PushSubscription] WHERE id = ?1')
-
-    await db.batch(ids.map((id) => statement.bind(id)))
+    return /** @type {PushSubscription} */ (result)
   },
 })

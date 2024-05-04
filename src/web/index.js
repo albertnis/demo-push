@@ -29,55 +29,170 @@ const tryParseJson = (input) => {
   }
 }
 
-const subscribeButtonClicked = () => {
-  console.log('clicked')
+/**
+ *
+ * @param {number} n
+ */
+const markActiveStep = (n) => {
+  const steps = document.querySelectorAll('#steps > li')
 
-  registerPermission()
-    .then((id) => console.log('Created subscription with ID', id))
-    .catch((e) => {
-      console.error('Failed to store subscription', e)
-    })
+  steps.forEach((el, i) => {
+    if (i < n) {
+      el.classList.add('step-completed')
+      el.classList.remove('step-future')
+      el.querySelector('button').setAttribute('disabled', 'disabled')
+    } else if (i === n) {
+      el.classList.remove('step-future', 'step-completed')
+      el.querySelector('button').removeAttribute('disabled')
+    } else {
+      el.classList.remove('step-completed')
+      el.classList.add('step-future')
+      el.querySelector('button').setAttribute('disabled', 'disabled')
+    }
+  })
 }
 
-const registerPermission = async () => {
-  const permission = await Notification.requestPermission()
+addEventListener('load', async () => {
+  await navigator.serviceWorker.register('/service-worker.js')
+  await checkAllSteps()
+})
 
-  if (permission !== 'granted') {
-    throw new Error('Permission not granted')
+const checkAllSteps = async () => {
+  markActiveStep(0)
+  const notificationsGranted = checkNotificationPermissions()
+  if (!notificationsGranted) {
+    return
   }
 
+  markActiveStep(1)
+  const subscribed = await checkSubscription()
+  if (!subscribed) {
+    return
+  }
+
+  markActiveStep(2)
+  const sent = await checkSendSubscription()
+  if (!sent) {
+    return
+  }
+
+  markActiveStep(3)
+}
+
+const checkNotificationPermissions = () => {
+  const permission = Notification.permission
+
+  let message
+  let granted
+  if (permission === 'granted') {
+    message = 'Notification permission is <b>granted</b>'
+    granted = true
+  } else if (permission === 'denied') {
+    message = 'Notification permission is denied'
+    granted = false
+  } else {
+    message = 'Notification permission is not granted'
+    granted = false
+  }
+
+  document.getElementById('status-notification').innerHTML = message
+
+  return granted
+}
+
+const requestNotificationPermissions = async () => {
+  await Notification.requestPermission()
+  checkAllSteps()
+}
+
+const checkSubscription = async () => {
   const registration = await navigator.serviceWorker.ready
 
-  const pushSubscription = await registration.pushManager.subscribe({
+  const pushSubscription = await registration.pushManager.getSubscription()
+
+  const subscribed = pushSubscription !== null
+
+  let message
+  if (subscribed) {
+    const domain = new URL(pushSubscription.endpoint).origin
+    message = `The service worker is subscribed to an endpoint on <b>${domain}</b>`
+  } else {
+    message = 'The service worker is not subscribed'
+  }
+
+  document.getElementById('status-subscription').innerHTML = message
+  return subscribed
+}
+
+const requestSubscription = async () => {
+  const registration = await navigator.serviceWorker.ready
+
+  await registration.pushManager.subscribe({
     applicationServerKey,
     userVisibleOnly: true,
   })
+
+  checkAllSteps()
+}
+
+let cachedPushSubscriptionId = null
+
+const checkSendSubscription = async () => {
+  if (cachedPushSubscriptionId === null) {
+    const registration = await navigator.serviceWorker.ready
+    const pushSubscription = await registration.pushManager.getSubscription()
+
+    const response = await fetch(
+      `/api/pushSubscription?endpoint=${encodeURIComponent(
+        pushSubscription.endpoint
+      )}`
+    )
+    if (response.ok) {
+      cachedPushSubscriptionId = (await response.json()).id
+    }
+  }
+
+  let message
+  if (cachedPushSubscriptionId !== null) {
+    message = `The server has subscription information for this browser, stored with ID <b>${cachedPushSubscriptionId}</b>`
+  } else {
+    message =
+      'The server does not have subscription information for this browser'
+  }
+
+  document.getElementById('status-send').innerHTML = message
+  return cachedPushSubscriptionId !== null
+}
+
+const requestSendSubscription = async () => {
+  const registration = await navigator.serviceWorker.ready
+  const pushSubscription = await registration.pushManager.getSubscription()
 
   const response = await fetch('/api/pushSubscription', {
     method: 'POST',
     body: JSON.stringify(pushSubscription.toJSON()),
   })
 
-  /** @type {string | undefined | false} */
-  const recordId = response.ok && tryParseJson(await response.text())?.id
-
-  if (!recordId) {
-    throw new Error('Server failed to save pushSubscription')
+  if (response.ok) {
+    cachedPushSubscriptionId = (await response.json()).id
   }
 
-  return recordId
+  checkAllSteps()
 }
 
-const main = async () => {
-  const registration = await navigator.serviceWorker.register(
-    '/service-worker.js'
-  )
+const requestNotify = async () => {
+  const registration = await navigator.serviceWorker.ready
+  const pushSubscription = await registration.pushManager.getSubscription()
 
-  console.log('Service Worker Registered')
-}
+  const { endpoint } = pushSubscription.toJSON()
 
-if ('serviceWorker' in navigator) {
-  main().catch((e) => {
-    console.error('Failed to register service worker', e)
+  const response = await fetch('/api/notification', {
+    method: 'POST',
+    body: JSON.stringify({ endpoint }),
   })
+
+  if (response.ok) {
+    document.getElementById('status-schedule').innerHTML = 'Sent successfully!'
+    markActiveStep(4)
+  }
 }

@@ -3,11 +3,64 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/style.css" />
     <title>Push test</title>
   </head>
   <body>
-    Push test
-    <button onclick="subscribeButtonClicked()">Subscribe</button>
-    <script lang="text/javascript" src="/index.js"></script>
+    <main>
+      <h1>Push demo</h1>
+      <ol id="steps">
+        <li>
+          <div>
+            <button
+              id="button-notification"
+              onclick="requestNotificationPermissions()"
+            >
+              Enable notifications
+            </button>
+          </div>
+          <div id="status-notification">
+            Notification permission is not granted
+          </div>
+        </li>
+        <li>
+          <div>
+            <button
+              id="button-subscription"
+              onclick="requestSubscription()"
+              disabled
+            >
+              Subscribe to push endpoint
+            </button>
+          </div>
+          <div id="status-subscription">
+            The service worker is not subscribed
+          </div>
+        </li>
+        <li>
+          <div>
+            <button
+              id="button-send"
+              onclick="requestSendSubscription()"
+              disabled
+            >
+              Send subscription information to server
+            </button>
+          </div>
+          <div id="status-send">
+            The server does not have subscription information for this browser
+          </div>
+        </li>
+        <li>
+          <div>
+            <button id="button-schedule" onclick="requestNotify()" disabled>
+              Tell server to send notification in 3-6 minutes
+            </button>
+          </div>
+          <div id="status-schedule">No notification is scheduled</div>
+        </li>
+      </ol>
+      <script lang="text/javascript" src="/index.js"></script>
+    </main>
   </body>
 </html>

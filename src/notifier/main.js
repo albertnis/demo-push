@@ -1,4 +1,4 @@
-import { pushSubscription } from '../repositories/pushSubscription'
+import { notification } from '../repositories/notification'
 import {
   generatePushHTTPRequest,
   ApplicationServerKeys,
@@ -6,7 +6,7 @@ import {
 
 /**
  * @param {ApplicationServerKeys} applicationServerKeys
- * @returns {(sub: import("../repositories/pushSubscription").PushSubscription) => Promise<void>}
+ * @returns {(sub: import("../repositories/notification").NotificationWithPushSubscription) => Promise<void>}
  */
 const sendNotification = (applicationServerKeys) => async (subscription) => {
   const { body, endpoint, headers } = await generatePushHTTPRequest({
@@ -22,11 +22,6 @@ const sendNotification = (applicationServerKeys) => async (subscription) => {
     },
     ttl: 60,
   })
-
-  console.log(
-    'Sending notification:',
-    JSON.stringify({ body: body.byteLength, endpoint, headers })
-  )
 
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -52,39 +47,42 @@ const sendNotification = (applicationServerKeys) => async (subscription) => {
  * @param {string} publicKey
  */
 export const main = async (db, privateKey, publicKey) => {
-  console.log('Scheduled run commenced')
-
-  console.log('Public key is', publicKey)
-  console.log('Private key is', privateKey)
-
-  console.log('Getting keys')
   const keys = await ApplicationServerKeys.fromJSON({
     privateKey,
     publicKey,
   })
 
-  const repo = pushSubscription(db)
+  const repo = notification(db)
+  const notifications = await repo.getAllDue()
 
-  console.log('Gettings subs')
-  const subscriptions = await repo.getAll()
+  console.log(`Processing ${notifications.length} due notifications`)
 
-  const sends = subscriptions.map(sendNotification(keys))
+  const sends = notifications.map(sendNotification(keys))
 
   const sendResults = await Promise.allSettled(sends)
 
-  const successfulIds = subscriptions
-    .map((s) => s.id)
+  const successfulIds = notifications
+    .map((s) => s.notification_id)
     .filter((_, i) => sendResults[i].status === 'fulfilled')
 
-  const failedIds = subscriptions
+  const failedIds = notifications
     .map((subscription, i) => ({ subscription, result: sendResults[i] }))
     .filter((x) => x.result.status === 'rejected')
     .map((x) => ({
-      id: x.subscription.id,
-      reason: x.result.reason.message,
+      notification_id: x.subscription.notification_id,
+      reason: 'reason' in x.result && x.result.reason.message,
     }))
 
-  console.log('The following IDs failed:', JSON.stringify(failedIds))
+  console.log(
+    'The following IDs failed and will be retried next time:',
+    JSON.stringify(failedIds)
+  )
 
-  console.log(`The following IDs succeeded: [${successfulIds.join(', ')}]`)
+  await repo.deleteMany(successfulIds)
+
+  console.log(
+    `The following IDs succeeded and were deleted: [${successfulIds.join(
+      ', '
+    )}]`
+  )
 }

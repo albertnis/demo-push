@@ -1,21 +1,18 @@
 self.addEventListener('install', async () => {
   console.log('Service Worker Installed')
-
-  // setInterval(() => console.log('Still installed'), 5000)
-
-  /** @type {Window[]} */
-  const clients = await self.clients.matchAll({ type: 'window' })
-
-  console.log(`Got ${clients.length} clients`)
-
-  clients.forEach((c) => c.postMessage('Message from SW'))
 })
 
 self.addEventListener('push', async (e) => {
   console.log('Received event:', JSON.stringify(e))
 
-  self.registration.showNotification('Something happened', {
-    body: 'it happened',
+  self.registration.showNotification('Push demo notification', {
+    body: `Here's the notification you scheduled: ${e.data?.text()}`,
     tag: 'about-push',
   })
+
+  const clients = await self.clients.matchAll({ type: 'window' })
+
+  clients.forEach((c) =>
+    c.postMessage({ source: 'push-sw', message: 'Notification received!' })
+  )
 })

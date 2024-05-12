@@ -35,13 +35,23 @@ button {
   border: none;
   border-radius: 100vmax;
   background-color: #fdf2f8;
-  transition: background-color 0.3s;
+  border: 2px solid #fdf2f8;
   text-align: inherit;
   margin: 0.5rem 0;
+  color: black;
 }
 
 button:not(:disabled):hover {
   background-color: #fbcfe8;
+}
+
+button.secondary {
+  background-color: transparent;
+  color: #fdf2f8;
+}
+
+button.secondary:not(:disabled):hover {
+  background-color: #fa62b5;
 }
 
 button:disabled {

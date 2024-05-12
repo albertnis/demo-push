@@ -1,198 +1,77 @@
-const SERVER_PUBLIC_KEY =
-  'BCUdAv5I5pJwseflX848zH2IQHwaSsvMRcE-7Exhq-ES1HssHg_UnHeinOlN9rg3dLrdSPd0IFfMvK08Ixj8e0w'
+import { applicationServerKey } from './key'
 
-/**
- *
- * @param {string} base64String
- * @returns
- */
-function urlB64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/')
-
-  const rawData = window.atob(base64)
-  const outputArray = new Uint8Array(rawData.length)
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i)
-  }
-  return outputArray
+/** @param {string} msg */
+const log = (msg) => {
+  console.log(msg)
+  document.getElementById('log').innerHTML += `${msg}\n`
 }
 
-const applicationServerKey = urlB64ToUint8Array(SERVER_PUBLIC_KEY)
-
-const tryParseJson = (input) => {
-  try {
-    return JSON.parse(input)
-  } catch {
-    return undefined
-  }
-}
-
-/**
- *
- * @param {number} n
- */
-const markActiveStep = (n) => {
-  const steps = document.querySelectorAll('#steps > li')
-
-  steps.forEach((el, i) => {
-    if (i < n) {
-      el.classList.add('step-completed')
-      el.classList.remove('step-future')
-      el.querySelector('button').setAttribute('disabled', 'disabled')
-    } else if (i === n) {
-      el.classList.remove('step-future', 'step-completed')
-      el.querySelector('button').removeAttribute('disabled')
-    } else {
-      el.classList.remove('step-completed')
-      el.classList.add('step-future')
-      el.querySelector('button').setAttribute('disabled', 'disabled')
-    }
+addEventListener('load', () => {
+  document.getElementById('schedule-button').addEventListener('click', () => {
+    scheduleNotification()
   })
-}
-
-addEventListener('load', async () => {
-  await navigator.serviceWorker.register('/service-worker.js')
-  await checkAllSteps()
 })
 
-const checkAllSteps = async () => {
-  markActiveStep(0)
-  const notificationsGranted = checkNotificationPermissions()
-  if (!notificationsGranted) {
+addEventListener('message', (e) => {
+  if (e.data.source !== 'push-sw') return
+  log(`Message received from service worker: ${JSON.stringify(e.data)}`)
+})
+
+export const scheduleNotification = async () => {
+  log('Checking browser compatibility')
+  if (!('Notification' in window)) {
+    log('Browser does not support Notification')
     return
   }
 
-  markActiveStep(1)
-  const subscribed = await checkSubscription()
-  if (!subscribed) {
+  if (!('serviceWorker' in navigator)) {
+    log('Browser does not support service workers')
     return
   }
+  log('Browser is compatible')
 
-  markActiveStep(2)
-  const sent = await checkSendSubscription()
-  if (!sent) {
+  log('Registering service worker')
+  const registration = await navigator.serviceWorker.register(
+    '/service-worker.js'
+  )
+  log('Service worker registered')
+
+  log('Requesting notification permissions')
+  const permission = await Notification.requestPermission()
+  if (permission !== 'granted') {
+    log('Notification permission was declined')
     return
   }
+  log('Notification permission was granted')
 
-  markActiveStep(3)
-}
-
-const checkNotificationPermissions = () => {
-  const permission = Notification.permission
-
-  let message
-  let granted
-  if (permission === 'granted') {
-    message = 'Notification permission is <b>granted</b>'
-    granted = true
-  } else if (permission === 'denied') {
-    message = 'Notification permission is denied'
-    granted = false
-  } else {
-    message = 'Notification permission is not granted'
-    granted = false
-  }
-
-  document.getElementById('status-notification').innerHTML = message
-
-  return granted
-}
-
-const requestNotificationPermissions = async () => {
-  await Notification.requestPermission()
-  checkAllSteps()
-}
-
-const checkSubscription = async () => {
-  const registration = await navigator.serviceWorker.ready
-
-  const pushSubscription = await registration.pushManager.getSubscription()
-
-  const subscribed = pushSubscription !== null
-
-  let message
-  if (subscribed) {
-    const domain = new URL(pushSubscription.endpoint).origin
-    message = `The service worker is subscribed to an endpoint on <b>${domain}</b>`
-  } else {
-    message = 'The service worker is not subscribed'
-  }
-
-  document.getElementById('status-subscription').innerHTML = message
-  return subscribed
-}
-
-const requestSubscription = async () => {
-  const registration = await navigator.serviceWorker.ready
-
+  log('Generating subscription details')
   await registration.pushManager.subscribe({
     applicationServerKey,
     userVisibleOnly: true,
   })
 
-  checkAllSteps()
-}
+  const pushSubscription = (
+    await registration.pushManager.getSubscription()
+  ).toJSON()
+  log(
+    `Subscription details generated! (${
+      new URL(pushSubscription.endpoint).origin
+    })`
+  )
 
-let cachedPushSubscriptionId = null
-
-const checkSendSubscription = async () => {
-  if (cachedPushSubscriptionId === null) {
-    const registration = await navigator.serviceWorker.ready
-    const pushSubscription = await registration.pushManager.getSubscription()
-
-    const response = await fetch(
-      `/api/pushSubscription?endpoint=${encodeURIComponent(
-        pushSubscription.endpoint
-      )}`
-    )
-    if (response.ok) {
-      cachedPushSubscriptionId = (await response.json()).id
-    }
-  }
-
-  let message
-  if (cachedPushSubscriptionId !== null) {
-    message = `The server has subscription information for this browser, stored with ID <b>${cachedPushSubscriptionId}</b>`
-  } else {
-    message =
-      'The server does not have subscription information for this browser'
-  }
-
-  document.getElementById('status-send').innerHTML = message
-  return cachedPushSubscriptionId !== null
-}
-
-const requestSendSubscription = async () => {
-  const registration = await navigator.serviceWorker.ready
-  const pushSubscription = await registration.pushManager.getSubscription()
-
-  const response = await fetch('/api/pushSubscription', {
+  log('Sending subscription details to server')
+  await fetch('/api/pushSubscription', {
     method: 'POST',
-    body: JSON.stringify(pushSubscription.toJSON()),
+    body: JSON.stringify(pushSubscription),
   })
+  log('Subscription details sent to server')
 
-  if (response.ok) {
-    cachedPushSubscriptionId = (await response.json()).id
-  }
-
-  checkAllSteps()
-}
-
-const requestNotify = async () => {
-  const registration = await navigator.serviceWorker.ready
-  const pushSubscription = await registration.pushManager.getSubscription()
-
-  const { endpoint } = pushSubscription.toJSON()
-
-  const response = await fetch('/api/notification', {
+  log('Requesting a notification')
+  await fetch('/api/notification', {
     method: 'POST',
-    body: JSON.stringify({ endpoint }),
+    body: JSON.stringify({ endpoint: pushSubscription.endpoint }),
   })
-
-  if (response.ok) {
-    document.getElementById('status-schedule').innerHTML = 'Sent successfully!'
-    markActiveStep(4)
-  }
+  log(
+    'Notification requested! It will be sent on the next poll, in 10 seconds-5 minutes.'
+  )
 }

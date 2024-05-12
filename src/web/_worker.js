@@ -21,47 +21,33 @@ export default {
     const url = new URL(request.url)
 
     if (url.pathname.startsWith('/api')) {
-      const pushSubscriptionRepo = pushSubscription(env.DB)
-      const notificationRepo = notification(env.DB)
-
+      // POST /api/pushSubscription
       if (
         url.pathname === '/api/pushSubscription' &&
         request.method === 'POST'
       ) {
+        const pushSubscriptionRepo = pushSubscription(env.DB)
+
         const body = await request.json()
-        console.log('Request body:', body)
         const id = await pushSubscriptionRepo.create({
           endpoint: body.endpoint,
           expiration_time: body.expirationTime,
           keys_auth: body.keys.auth,
           keys_p256dh: body.keys.p256dh,
         })
+
         return Response.json({ id }, { status: 201 })
       }
 
-      if (
-        url.pathname === '/api/pushSubscription' &&
-        request.method === 'GET' &&
-        url.searchParams.get('endpoint')?.length > 0
-      ) {
-        console.log(url.searchParams.get('endpoint'))
-        const res = await pushSubscriptionRepo.getByEndpoint(
-          url.searchParams.get('endpoint')
-        )
-        return Response.json(
-          res
-            ? { id: res.push_subscription_id }
-            : 'Subscription with provided endpoint not found',
-          { status: res ? 200 : 404 }
-        )
-      }
-
+      // POST /api/notification
       if (url.pathname === '/api/notification' && request.method === 'POST') {
+        const notificationRepo = notification(env.DB)
+
         const body = await request.json()
-        console.log('Request body:', body)
         const id = await notificationRepo.create({
           endpoint: body.endpoint,
         })
+
         return Response.json({ id }, { status: 201 })
       }
 

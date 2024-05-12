@@ -22,7 +22,7 @@ export const notification = (db) => ({
           notification_time,
           push_subscription_id
         ) 
-        SELECT datetime('now', '+3 minutes'), push_subscription_id
+        SELECT datetime('now', '+10 seconds'), push_subscription_id
         FROM [PushSubscription]
         WHERE endpoint = ?1
         `

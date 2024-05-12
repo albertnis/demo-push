@@ -15,13 +15,18 @@ export const pushSubscription = (db) => ({
     const result = await db
       .prepare(
         `INSERT INTO [PushSubscription] (
-        endpoint,
-        expiration_time,
-        keys_auth,
-        keys_p256dh
-      ) VALUES (
-        ?1, ?2, ?3, ?4
-      )`
+          endpoint,
+          expiration_time,
+          keys_auth,
+          keys_p256dh
+        ) VALUES (
+          ?1, ?2, ?3, ?4
+        ) ON CONFLICT(endpoint) DO UPDATE
+        SET
+          expiration_time=excluded.expiration_time,
+          keys_auth=excluded.keys_auth,
+          keys_p256dh=excluded.keys_p256dh
+      `
       )
       .bind(endpoint, expiration_time, keys_auth, keys_p256dh)
       .all()

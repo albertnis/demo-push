@@ -4,5 +4,6 @@ CREATE TABLE IF NOT EXISTS PushSubscription (
   endpoint TEXT NOT NULL,
   expiration_time TEXT,
   keys_auth TEXT NOT NULL,
-  keys_p256dh TEXT NOT NULL
+  keys_p256dh TEXT NOT NULL,
+  UNIQUE(endpoint)
 );

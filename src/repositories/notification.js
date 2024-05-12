@@ -3,6 +3,7 @@
  * @prop {number} notification_id
  * @prop {number} push_subscription_id
  * @prop {string} notification_time
+ * @prop {string} created_at
  *
  * @typedef {Notification & import('./pushSubscription').PushSubscription} NotificationWithPushSubscription
  */

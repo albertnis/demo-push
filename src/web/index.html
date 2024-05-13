@@ -16,7 +16,36 @@
   <body>
     <main>
       <h1>Push demo</h1>
+      <p>Play around with the push API!</p>
+      <ul>
+        <li>
+          After clicking "schedule a notification", a browser-generated
+          subscription endpoint will be sent to the demo server for storage. A
+          notification will be stored for delivery after 10 seconds (but will
+          take up to 5 minutes due to server polling).
+        </li>
+        <li>
+          Endpoints and unsent notifications are automatically deleted after one
+          hour. If you want to delete your endpoint and notifications now, click
+          the "Delete my subscription" button. Alternatively, use the "clear
+          site data" feature of your browser to invalidate the subscription.
+        </li>
+        <li>
+          The code behind the site is deliberately simple vanilla JavaScript.
+          Nothing transpiled to be seen; check it out or even debug it in your
+          browser!
+        </li>
+        <li>
+          The server code has a single third-party dependency (<a
+            href="https://github.com/alastaircoote/webpush-webcrypto"
+            >webpush-webcrypto</a
+          >) for encrypting notification contents
+        </li>
+      </ul>
       <button id="schedule-button">Schedule a notification</button>
+      <button class="secondary" id="delete-button">
+        Delete my subscription
+      </button>
       <pre id="log"></pre>
       <script lang="text/javascript" src="/index.js" type="module"></script>
       <script lang="text/javascript" src="/key.js" type="module"></script>

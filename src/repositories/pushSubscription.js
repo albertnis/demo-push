@@ -41,6 +41,21 @@ export const pushSubscription = (db) => ({
     return /** @type {PushSubscription[]} */ (result.results)
   },
 
+  /** @param {string} endpoint */
+  deleteByEndpoint: async (endpoint) => {
+    const result = await db
+      .prepare(
+        `DELETE FROM [PushSubscription]
+        WHERE endpoint = ?1
+      `
+      )
+      .bind(endpoint)
+      .all()
+
+    return result.meta.rows_written
+  },
+  /**
+
   /**
    * @param {string} endpoint
    * @returns {Promise<PushSubscription | null>}

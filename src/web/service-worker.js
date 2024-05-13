@@ -1,18 +1,29 @@
+const channel = new BroadcastChannel('about-push')
+
 self.addEventListener('install', async () => {
-  console.log('Service Worker Installed')
+  self.skipWaiting()
+  channel.postMessage({ message: 'New service worker installed' })
 })
 
 self.addEventListener('push', async (e) => {
   console.log('Received event:', JSON.stringify(e))
 
-  self.registration.showNotification('Push demo notification', {
-    body: `Here's the notification you scheduled: ${e.data?.text()}`,
-    tag: 'about-push',
+  const data = e.data?.json() //
+
+  const { created_at_unixepoch, notification_time_unixepoch } = data
+
+  const dateFormat = Intl.DateTimeFormat(navigator.language, {
+    timeStyle: 'short',
+    dateStyle: undefined,
+  }).format(new Date(created_at_unixepoch))
+
+  channel.postMessage({
+    message: `Notification received: ${JSON.stringify(data)}`,
   })
 
-  const clients = await self.clients.matchAll({ type: 'window' })
-
-  clients.forEach((c) =>
-    c.postMessage({ source: 'push-sw', message: 'Notification received!' })
-  )
+  self.registration.showNotification('Push demo notification', {
+    body: `Here's the notification you created at ${dateFormat}`,
+    tag: 'about-push',
+    timestamp: notification_time_unixepoch,
+  })
 })

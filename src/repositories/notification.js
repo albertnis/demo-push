@@ -3,7 +3,9 @@
  * @prop {number} notification_id
  * @prop {number} push_subscription_id
  * @prop {string} notification_time
+ * @prop {number} notification_time_unixepoch
  * @prop {string} created_at
+ * @prop {number} created_at_unixepoch
  *
  * @typedef {Notification & import('./pushSubscription').PushSubscription} NotificationWithPushSubscription
  */
@@ -38,7 +40,10 @@ export const notification = (db) => ({
   getAllDue: async () => {
     const result = await db
       .prepare(
-        `SELECT *
+        `SELECT
+           *,
+           unixepoch(n.notification_time, 'subsec') * 1000 as notification_time_unixepoch,
+           unixepoch(n.created_at, 'subsec') * 1000 as created_at_unixepoch
          FROM
            [PushSubscription] ps
            INNER JOIN [Notification] n ON ps.push_subscription_id = n.push_subscription_id

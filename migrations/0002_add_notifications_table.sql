@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS Notification (
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   notification_time TEXT NOT NULL,
   push_subscription_id INTEGER NOT NULL,
-  FOREIGN KEY(push_subscription_id) REFERENCES PushSubscription(push_subscription_id)
+  FOREIGN KEY(push_subscription_id) REFERENCES PushSubscription(push_subscription_id) ON DELETE CASCADE
 );

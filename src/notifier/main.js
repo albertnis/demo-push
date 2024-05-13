@@ -9,10 +9,15 @@ import {
  * @returns {(sub: import("../repositories/notification").NotificationWithPushSubscription) => Promise<void>}
  */
 const sendNotification = (applicationServerKeys) => async (subscription) => {
+  const { created_at_unixepoch, notification_time_unixepoch } = subscription
+
   const { body, endpoint, headers } = await generatePushHTTPRequest({
     adminContact: 'test@example.com',
     applicationServerKeys,
-    payload: 'TEST PAYLOAD',
+    payload: JSON.stringify({
+      created_at_unixepoch,
+      notification_time_unixepoch,
+    }),
     target: {
       endpoint: subscription.endpoint,
       keys: {

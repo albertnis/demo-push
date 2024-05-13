@@ -39,6 +39,19 @@ export default {
         return Response.json({ id }, { status: 201 })
       }
 
+      // DELETE /api/pushSubscription
+      if (
+        url.pathname === '/api/pushSubscription' &&
+        request.method === 'DELETE'
+      ) {
+        const pushSubscriptionRepo = pushSubscription(env.DB)
+
+        const body = await request.json()
+        const count = await pushSubscriptionRepo.deleteByEndpoint(body.endpoint)
+
+        return Response.json({ count }, { status: 200 })
+      }
+
       // POST /api/notification
       if (url.pathname === '/api/notification' && request.method === 'POST') {
         const notificationRepo = notification(env.DB)

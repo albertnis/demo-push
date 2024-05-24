@@ -47,4 +47,19 @@ export const pushSubscription = (db) => ({
 
     return result.meta.rows_written
   },
+
+  /**
+   * Delete all push subscriptions created over an hour ago
+   * @returns number of subscriptions deleted
+   */
+  deleteAllStale: async () => {
+    const result = await db
+      .prepare(
+        `DELETE FROM [PushSubscription]
+       WHERE unixepoch('now') - unixepoch(created_at) > 3600`
+      )
+      .all()
+
+    return result.meta.rows_written
+  },
 })

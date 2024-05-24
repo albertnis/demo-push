@@ -3,6 +3,7 @@ import {
   generatePushHTTPRequest,
   ApplicationServerKeys,
 } from 'webpush-webcrypto'
+import { pushSubscription } from '../repositories/pushSubscription'
 
 /**
  * @param {ApplicationServerKeys} applicationServerKeys
@@ -90,4 +91,8 @@ export const main = async (db, privateKey, publicKey) => {
       ', '
     )}]`
   )
+
+  const subRepo = pushSubscription(db)
+  const nDeleted = await subRepo.deleteAllStale()
+  console.log(`${nDeleted} subscriptions over an hour old have been deleted`)
 }

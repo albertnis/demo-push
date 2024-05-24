@@ -5,7 +5,12 @@
   "main": "index.js",
   "scripts": {
     "run:web": "wrangler pages dev --port 8787",
-    "run:notifier": "wrangler dev -c src/notifier/wrangler.toml --test-scheduled --persist-to .wrangler/state/ --port 8788"
+    "run:notifier": "wrangler dev -c src/notifier/wrangler.toml --test-scheduled --persist-to .wrangler/state/ --port 8788",
+    "deploy:web": "wrangler pages deploy --branch production",
+    "deploy:notifier": "wrangler -c src/notifier/wrangler.toml deploy",
+    "db:migrate:remote": "npx wrangler d1 migrations apply demo-push --remote",
+    "db:migrate:local": "npx wrangler d1 migrations apply demo-push --local",
+    "db:create:remote": "npx wrangler d1 create demo-push"
   },
   "keywords": [],
   "author": "",

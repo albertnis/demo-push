@@ -55,26 +55,6 @@ export const notification = (db) => ({
     return /** @type {NotificationWithPushSubscription[]} */ (result.results)
   },
 
-  /**
-   * @param {string} endpoint
-   * @returns {Promise<number | null>}
-   **/
-  getByEndpoint: async (endpoint) => {
-    const result = await db
-      .prepare(
-        `SELECT notification_id
-         FROM
-           [PushSubscription] ps
-           INNER JOIN [Notification] n ON ps.push_subscription_id = n.push_subscription_id
-         WHERE
-           endpoint = ?1`
-      )
-      .bind(endpoint)
-      .first()
-
-    return /** @type {number} */ (result.notification_id)
-  },
-
   /** @param {number[]} ids */
   deleteMany: async (ids) => {
     if (ids.length === 0) return

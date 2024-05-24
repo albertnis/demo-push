@@ -34,13 +34,6 @@ export const pushSubscription = (db) => ({
     return result.meta.last_row_id
   },
 
-  /** @returns {Promise<PushSubscription[]>} */
-  getAll: async () => {
-    const result = await db.prepare('SELECT * FROM [PushSubscription]').all()
-
-    return /** @type {PushSubscription[]} */ (result.results)
-  },
-
   /** @param {string} endpoint */
   deleteByEndpoint: async (endpoint) => {
     const result = await db
@@ -53,19 +46,5 @@ export const pushSubscription = (db) => ({
       .all()
 
     return result.meta.rows_written
-  },
-  /**
-
-  /**
-   * @param {string} endpoint
-   * @returns {Promise<PushSubscription | null>}
-   **/
-  getByEndpoint: async (endpoint) => {
-    const result = await db
-      .prepare('SELECT * FROM [PushSubscription] WHERE endpoint = ?1')
-      .bind(endpoint)
-      .first()
-
-    return /** @type {PushSubscription} */ (result)
   },
 })

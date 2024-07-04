@@ -88,3 +88,45 @@ web-push generate-vapid-keys --json
 1. The public key needs to be provided to the notifier and the frontend:
    - For the notifier, enter it in the vars section of `src/notifier/wrangler.toml`
    - For the frontend, provide it as the `SERVER_PUBLIC_KEY` in `src/web/key.js`
+
+# Web Push API - A diagram
+
+```mermaid
+sequenceDiagram
+    actor User
+    box Purple App Frontend
+    participant A as Client Window
+    participant B as Client Worker
+    end
+    box brown Not our software
+    participant C as Browser
+    participant OS
+    participant D as Push Server
+    end
+    participant E as App Backend
+    User->>A: Turn on notifications
+    A->>C: Notifications permissions?
+    A->>B: Register a worker
+    A->>C: Subscribe my worker to push messages. Here's the public signing key. What's the endpoint?
+    activate A
+    C->>D: Make an endpoint for this worker. Here's the public signing key.
+    D-->>C: Here's your endpoint
+    C->>C: Generate encryption keys
+    C-->>A: Here's your endpoint and public encryption key
+    A->>E: Here's the endpoint and public encryption key
+    E->>E: Store sensitive endpoint and encryption key
+    destroy A
+    User-xA: Close
+    C--xB: Done with you
+    Note right of E: Notification to send?
+    E->>E: Encrypt and sign data
+    E->>D: Signed and encrypted notification
+    D->>D: Verify it's signed by expected server
+    Note right of D: Can't decrypt
+    D--)C: New notification
+    C->>C: Decrypt
+    C->>B: Wake up and deal with this
+    B->>C: Notify
+    C->>OS: Notify
+    OS->>User: Ding!
+```
